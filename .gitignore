@@ -19,3 +19,5 @@ venv/
 
 # Sistema
 .DS_Store
+**/coverage.xml
+**/.coverage
