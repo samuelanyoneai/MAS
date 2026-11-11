@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Informe Consolidado — EvalRepo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #F1F5F9; color: #0F172A; font-size: 14px; }
+  .container { max-width: 960px; margin: 32px auto; padding: 0 16px 48px; }
+  .header { background: #1B3A5C; color: white; border-radius: 12px;
+             padding: 28px 32px; margin-bottom: 20px; }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .header .sub { opacity: 0.6; font-size: 13px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(6,1fr);
+                 gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: white; border: 1px solid #E2E8F0; border-radius: 10px;
+                padding: 14px; text-align: center; }
+  .stat-card .val { font-size: 24px; font-weight: 700; }
+  .stat-card .lbl { font-size: 12px; color: #64748B; margin-top: 4px; }
+  .card { background: white; border: 1px solid #E2E8F0; border-radius: 12px;
+          overflow: hidden; }
+  .card-header { padding: 14px 20px; border-bottom: 1px solid #F1F5F9;
+                  display: flex; justify-content: space-between; align-items: center; }
+  .card-header h2 { font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600;
+       color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;
+       background: #F8FAFC; border-bottom: 1px solid #E2E8F0; }
+  td { padding: 12px 16px; border-bottom: 1px solid #F8FAFC; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F8FAFC; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px;
+           font-size: 11px; font-weight: 600; }
+  .pass  { color: #065F46; background: #ECFDF5; }
+  .risk  { color: #92400E; background: #FFFBEB; }
+  .fail  { color: #991B1B; background: #FEF2F2; }
+  .score-num { font-size: 16px; font-weight: 700; }
+  .alert-icon { color: #D97706; font-size: 13px; }
+  .mini-bar { height: 6px; background: #E2E8F0; border-radius: 999px; width: 80px; display: inline-block; vertical-align: middle; margin-left: 6px; }
+  .mini-bar-fill { height: 100%; border-radius: 999px; }
+  .footer { text-align: center; color: #94A3B8; font-size: 12px; margin-top: 32px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Informe Consolidado del Grupo</h1>
+    <div class="sub">Generado: {{ generated_at }} · EvalRepo UTPL · Sistema Multi-Agente</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="val">{{ stats.total }}</div><div class="lbl">Total</div></div>
+    <div class="stat-card"><div class="val" style="color:#065F46">{{ stats.aprobados }}</div><div class="lbl">Aprobados ≥70</div></div>
+    <div class="stat-card"><div class="val" style="color:#92400E">{{ stats.en_riesgo }}</div><div class="lbl">En riesgo 50–70</div></div>
+    <div class="stat-card"><div class="val" style="color:#991B1B">{{ stats.reprobados }}</div><div class="lbl">Reprobados &lt;50</div></div>
+    <div class="stat-card"><div class="val" style="color:#2563EB">{{ stats.promedio }}</div><div class="lbl">Promedio</div></div>
+    <div class="stat-card"><div class="val">{{ stats.max }} / {{ stats.min }}</div><div class="lbl">Máx / Mín</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <div class="card-header">
+      <h2>Resultados por repositorio</h2>
+      <span style="font-size:12px;color:#64748B">Ordenado por puntaje descendente</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Estudiante</th>
+          <th>Repositorio</th>
+          <th>Puntaje</th>
+          <th>Estructural</th>
+          <th>Versionado</th>
+          <th>Temporal</th>
+          <th>Contenido</th>
+          <th>Patrón</th>
+          <th>Entrega</th>
+          <th>Alertas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set sorted_results = results | sort(attribute='global_score', reverse=True) %}
+        {% for r in sorted_results %}
+        {% set sc = r.global_score %}
+        <tr {% if sc < 50 %}style="background:#FEF2F2"{% elif sc < 70 %}style="background:#FFFBEB"{% endif %}>
+          <td style="color:#94A3B8;font-size:12px">{{ loop.index }}</td>
+          <td><strong>{{ r.student }}</strong></td>
+          <td style="font-family:monospace;font-size:12px">{{ r.repo_name }}</td>
+          <td>
+            <span class="score-num {% if sc >= 70 %}pass{% elif sc >= 50 %}risk{% else %}fail{% endif %}">
+              {{ sc | round(1) }}
+            </span>
+            <span style="color:#94A3B8;font-size:12px">/100</span>
+            {% if r.score_overridden %}
+            <span title="Ajustado manualmente (calculado: {{ r.original_score | round(1) }})" style="color:#2563EB;font-size:12px;cursor:help">✎</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.structural %}
+            {{ r.structural.score | round(1) }}/{{ r.structural.max_score | int }}
+            <span class="mini-bar"><span class="mini-bar-fill" style="width:{{ ((r.structural.score / r.structural.max_score) * 100) | round(0) | int if r.structural.max_score > 0 else 0 }}%;background:#8B5CF6"></span></span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.versioning %}
+            {{ r.versioning.score | round(1) }}/{{ r.versioning.max_score | int }}
+            <span class="mini-bar"><span class="mini-bar-fill" style="width:{{ ((r.versioning.score / r.versioning.max_score) * 100) | round(0) | int if r.versioning.max_score > 0 else 0 }}%;background:#2563EB"></span></span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.temporal %}
+            {{ r.temporal.score | round(1) }}/{{ r.temporal.max_score | int }}
+            <span class="mini-bar"><span class="mini-bar-fill" style="width:{{ ((r.temporal.score / r.temporal.max_score) * 100) | round(0) | int if r.temporal.max_score > 0 else 0 }}%;background:#D97706"></span></span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.content %}
+            {{ r.content.score | round(1) }}/{{ r.content.max_score | int }}
+            <span class="mini-bar"><span class="mini-bar-fill" style="width:{{ ((r.content.score / r.content.max_score) * 100) | round(0) | int if r.content.max_score > 0 else 0 }}%;background:#059669"></span></span>
+            {% else %}—{% endif %}
+          </td>
+          <td><span class="badge {% if r.pattern_label == 'Trabajo continuo' %}pass{% elif r.pattern_label == 'Actividad irregular' %}risk{% else %}fail{% endif %}">{{ r.pattern_label }}</span></td>
+          <td>
+            {% if r.temporal %}
+              {% if r.temporal.on_time %}<span style="color:#065F46;font-weight:600;font-size:12px">A tiempo</span>
+              {% else %}<span style="color:#991B1B;font-weight:600;font-size:12px">Tarde</span>{% endif %}
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.alerts | length > 0 %}
+            <span class="alert-icon">{{ r.alerts | length }}</span>
+            {% else %}<span style="color:#94A3B8">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer" style="margin-top:24px">
+    Informe consolidado generado automáticamente por EvalRepo · UTPL TIC 2025
+  </div>
+</div>
+</body>
+</html>

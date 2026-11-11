@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Criterios de evaluación — EvalRepo UTPL
+# El docente edita este archivo sin tocar código fuente.
+# Los pesos deben sumar 100. Los umbrales son configurables por asignatura.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Período académico del ciclo
+periodo:
+  inicio: "2026-06-15"          # Fecha de inicio (YYYY-MM-DD)
+  fin:    "2026-09-20"          # Fecha de fin
+  fecha_limite: "2026-09-19T00:00:00"  # Fecha límite de entrega (ISO-8601, UTC)
+
+# ── Dimensión 1: Análisis Estructural ────────────────────────────────────────
+estructural:
+  habilitado: true
+  peso: 25                      # % del puntaje global
+
+  # Archivos y carpetas que deben estar presentes en la rama principal
+  archivos_requeridos:
+    - README.md
+    - src/
+    - tests/
+
+  # El README debe superar este número de caracteres para considerarse válido
+  readme_min_chars: 200
+
+# ── Dimensión 2: Análisis de Versionado ─────────────────────────────────────
+versionado:
+  habilitado: true
+  peso: 40
+
+  # Número mínimo de commits en el período académico
+  commits_min: 10
+
+  # Evaluación de calidad de mensajes de commit
+  calidad_mensajes:
+    habilitado: true
+    # Porcentaje mínimo de commits con mensajes descriptivos
+    umbral_porcentaje: 70
+    # Patrones de mensajes genéricos (insensible a mayúsculas)
+    patrones_genericos:
+      - "^update$"
+      - "^fix$"
+      - "^test$"
+      - "^changes$"
+      - "^commit$"
+      - "^wip$"
+      - "^done$"
+      - "^asdf"
+      - "^\\."
+      - "^[a-z]{1,3}$"   # Mensajes de 1–3 caracteres
+
+  # Uso de ramas
+  ramas:
+    habilitado: true
+    min_ramas: 2              # Incluyendo main/master
+
+# ── Dimensión 3: Análisis Temporal ───────────────────────────────────────────
+temporal:
+  habilitado: true
+  peso: 25
+
+  # Verificar que haya al menos 1 commit por semana durante el período
+  actividad_minima_semanal: true
+
+  # Alerta cuando la actividad está concentrada al final
+  alerta_concentracion:
+    habilitado: true
+    dias_finales: 3           # Ventana antes de la fecha límite
+    porcentaje_umbral: 70     # % de commits en esa ventana para activar alerta
+
+  # Alerta cuando hay muchos commits en muy poco tiempo (posible copia)
+  alerta_commits_masivos:
+    habilitado: true
+    commits_en_ventana: 20    # Número de commits
+    ventana_horas: 1          # En este número de horas
+
+  # Alerta por inactividad prolongada
+  alerta_inactividad:
+    habilitado: true
+    semanas_consecutivas: 2   # Semanas sin ningún commit
+
+# ── Dimensión 4: Análisis de Contenido (Claude Sonnet 4.5) ───────────────────
+contenido:
+  habilitado: true
+  peso: 10
+
+  # Requisitos funcionales que Claude verificará en el código fuente.
+  # Redacta cada requisito de forma clara y verificable.
+  requisitos_funcionales:
+    - "Implementar al menos 3 clases con herencia entre ellas"
+    - "Usar al menos 1 patrón de diseño (Factory, Singleton, Observer, etc.)"
+    - "Aplicar al menos 2 principios SOLID de forma explícita"
+
+  # Extensiones de archivo que Claude analizará (máximo 10 archivos)
+  extensiones_codigo:
+    - .py
+    - .java
+    - .js
+    - .ts
+    - .cpp
+    - .cs
+
+  # Número máximo de archivos a analizar por repositorio
+  max_archivos: 10

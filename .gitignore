@@ -1,0 +1,21 @@
+# Secretos - nunca subir
+**/.env
+**/.env.local
+
+# Dependencias y entornos (se reinstalan con requirements.txt / package.json)
+venv/
+**/venv/
+**/node_modules/
+
+# Python
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# Salidas generadas
+**/reportes/
+**/dist/
+*.zip
+
+# Sistema
+.DS_Store
