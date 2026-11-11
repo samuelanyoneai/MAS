@@ -46,9 +46,11 @@ def test_limite_deteccion_commits_masivos(n_commits):
     commits = [{"date": (base + timedelta(hours=2 * i)).isoformat()} for i in range(n_commits)]
     _, segundos = medir(_detect_massive_commits, commits, 20, 1)
     print(f"\n[commits_masivos] {n_commits} commits -> {segundos:.4f}s")
-    # a 10000 commits no deberia tardar mas de 5s; mas alla de eso la curva
-    # cuadratica lo vuelve impractico (ver test siguiente)
-    assert segundos < 5.0
+    # umbral generoso a proposito: en una Mac tarda ~1.5s a 10000 commits, pero
+    # en runners compartidos de CI (mas lentos y con CPU variable) se midio
+    # hasta 7.7s para el mismo caso -- esto solo debe fallar ante una
+    # regresion real (ej. si deja de ser O(n^2) y pasa a ser mas lento aun)
+    assert segundos < 20.0
 
 
 # Prueba para documentar el techo real: a partir de que cantidad de commits
@@ -59,8 +61,9 @@ def test_limite_deteccion_commits_masivos_techo_20000():
     _, segundos = medir(_detect_massive_commits, commits, 20, 1)
     print(f"\n[commits_masivos] 20000 commits -> {segundos:.4f}s (limite practico)")
     # no es un assert de "deberia pasar rapido" -- es la documentacion del techo:
-    # a este tamano ya tarda varios segundos un solo repo, solo en este chequeo
-    assert segundos < 15.0
+    # a este tamano ya tarda varios segundos un solo repo, solo en este chequeo.
+    # umbral generoso (ver comentario de arriba sobre runners de CI mas lentos)
+    assert segundos < 60.0
 
 
 # Prueba para ver si la alerta SI se dispara temprano (early exit), el tiempo
