@@ -117,12 +117,8 @@ async def start_evaluation(
         raise HTTPException(status_code=400, detail="Se requiere al menos una URL.")
 
     try:
-        if request.criteria_path:
-            # viene del body del request, no es confiable: restringido a CRITERIA_DIR
-            criteria = load_criteria(request.criteria_path, restrict_to_dir=True)
-        else:
-            # CRITERIA_PATH lo define quien despliega el backend, no el request HTTP
-            criteria = load_criteria(os.getenv("CRITERIA_PATH"))
+        criteria_path = request.criteria_path or os.getenv("CRITERIA_PATH")
+        criteria = load_criteria(criteria_path)
         if request.criteria:
             criteria = _deep_merge(criteria, request.criteria)
             _validate(criteria)

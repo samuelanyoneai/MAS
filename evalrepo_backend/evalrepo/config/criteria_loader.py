@@ -17,26 +17,23 @@ CRITERIA_DIR = Path(__file__).parent.resolve()
 DEFAULT_CRITERIA_PATH = CRITERIA_DIR / "default.yaml"
 
 
-def load_criteria(path: str | Path | None = None, restrict_to_dir: bool = False) -> dict[str, Any]:
+def load_criteria(path: str | Path | None = None) -> dict[str, Any]:
     """Carga el YAML de criterios (o el default si no se pasa ruta) y lo valida.
 
-    `restrict_to_dir=True` limita `path` a CRITERIA_DIR: lo usa la API HTTP, donde
-    `path` viene de `EvaluationRequest.criteria_path` (un campo del request, no confiable),
-    para que no se pueda leer un archivo arbitrario del servidor con un "../../" o una
-    ruta absoluta. El CLI (`demo.py`) no lo activa porque ahí la ruta la escribe quien
-    ejecuta el script en su propia máquina, con acceso de todas formas a su filesystem.
+    `path` puede venir de un request HTTP (`EvaluationRequest.criteria_path`) o de un
+    argumento de CLI (`demo.py --criteria`) -- en ningún caso es confiable, así que
+    siempre se restringe a CRITERIA_DIR antes de abrirlo. No existe ninguna rama de
+    código que haga `open()` sobre una ruta sin validar.
     """
     if not path:
         resolved = DEFAULT_CRITERIA_PATH
-    elif restrict_to_dir:
+    else:
         candidate = (CRITERIA_DIR / path).resolve()
         try:
             candidate.relative_to(CRITERIA_DIR)
         except ValueError:
             raise ValueError(f"Ruta de criterios no permitida: {path}")
         resolved = candidate
-    else:
-        resolved = Path(path)
 
     if not resolved.exists():
         raise FileNotFoundError(f"Archivo de criterios no encontrado: {resolved}")

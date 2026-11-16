@@ -13,6 +13,11 @@ import yaml from 'js-yaml'
 // ─── Configuración ────────────────────────────────────────────────────────────
 const API_BASE = 'http://localhost:8000'
 
+// Formato esperado de los ids que genera el backend (uuid4). Se valida antes de
+// usarlos para construir cualquier URL, aunque siempre vengan de la propia API.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isValidEvalId = (id) => typeof id === 'string' && UUID_RE.test(id)
+
 // ─── Paleta de colores ────────────────────────────────────────────────────────
 const C = {
   navy:      '#1B3A5C',
@@ -1874,7 +1879,7 @@ export default function App() {
 
   // Polling del estado de evaluación
   useEffect(() => {
-    if (!evalId || evalStatus !== 'running') return
+    if (!isValidEvalId(evalId) || evalStatus !== 'running') return
     pollFailuresRef.current = 0
     pollStartedAtRef.current = Date.now()
     setPollWarning('')
@@ -2002,6 +2007,12 @@ export default function App() {
       if (!res.ok) {
         setEvalStatus('error')
         setEvalError(data.detail || 'El backend rechazó la configuración de criterios.')
+        setTab('cargar')
+        return
+      }
+      if (!isValidEvalId(data.evaluation_id)) {
+        setEvalStatus('error')
+        setEvalError('El backend devolvió un identificador de evaluación inválido.')
         setTab('cargar')
         return
       }

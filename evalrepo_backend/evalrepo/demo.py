@@ -14,7 +14,7 @@ Uso:
   python demo.py --urls repos.txt
 
   # Especificando directorio de salida y criterios
-  python demo.py --urls repos.txt --output ./reportes-parcial1 --criteria config/default.yaml
+  python demo.py --urls repos.txt --output ./reportes-parcial1 --criteria default.yaml
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--criteria", default=None,
-        help="Ruta al archivo YAML de criterios (default: config/default.yaml)",
+        help="Ruta al archivo YAML de criterios (default: default.yaml), relativa a config/",
     )
     parser.add_argument(
         "--output", default="./reportes",
@@ -72,7 +72,7 @@ def main() -> None:
     except (FileNotFoundError, ValueError) as e:
         _exit(f"Error en criterios: {e}")
 
-    _banner(repo_urls, args.criteria or "config/default.yaml", args.output)
+    _banner(repo_urls, args.criteria or "default.yaml", args.output)
 
     from graph import build_graph, initial_state
     graph = build_graph()
