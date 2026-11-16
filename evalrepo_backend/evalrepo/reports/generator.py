@@ -21,6 +21,12 @@ logger = logging.getLogger(__name__)
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 
+def _safe_filename(name: str) -> str:
+    """Se queda solo con el nombre del archivo, descartando cualquier separador de
+    ruta ("/", "\\", "..") que haya llegado en `student` o `repo_name`."""
+    return Path(name).name
+
+
 def _get_jinja_env() -> Environment:
     """Arma el entorno de Jinja2 apuntando a la carpeta de templates."""
     return Environment(
@@ -117,12 +123,17 @@ def save_reports(
     output_dir: Path,
 ) -> None:
     """Guarda los HTML generados en disco, para el modo demo por línea de comandos."""
+    output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for result in results:
         if result.get("report_html"):
-            filename = f"{result['student']}_{result['repo_name']}.html"
-            (output_dir / filename).write_text(result["report_html"], encoding="utf-8")
+            filename = _safe_filename(f"{result['student']}_{result['repo_name']}.html")
+            report_path = (output_dir / filename).resolve()
+            if output_dir not in report_path.parents and report_path != output_dir:
+                logger.warning("[Generador] Nombre de archivo descartado por ruta insegura: %s", filename)
+                continue
+            report_path.write_text(result["report_html"], encoding="utf-8")
             logger.info("[Generador] Guardado: %s", filename)
 
     consolidated_path = output_dir / "consolidado.html"

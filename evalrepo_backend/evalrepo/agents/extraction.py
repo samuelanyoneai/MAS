@@ -4,6 +4,7 @@ Se usó PyGitHub en vez de llamar a la REST API a mano.
 
 from __future__ import annotations
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -239,6 +240,9 @@ def _fetch_named_files(
     return contents
 
 
+_VALID_SEGMENT = re.compile(r"^[A-Za-z0-9._-]+$")
+
+
 def _parse_url(url: str) -> tuple[str, str]:
     """Extrae owner y repo_name de una URL de GitHub."""
     url = url.rstrip("/")
@@ -248,4 +252,13 @@ def _parse_url(url: str) -> tuple[str, str]:
     # https://github.com/owner/repo → [-2], [-1]
     if len(parts) < 2:
         raise ValueError(f"URL de GitHub inválida: {url}")
-    return parts[-2], parts[-1]
+    owner, repo_name = parts[-2], parts[-1]
+    # Validamos que owner/repo_name tengan la forma de un identificador real de GitHub
+    # (nunca "..", "/" u otros separadores de ruta) porque ambos valores se usan más
+    # adelante para nombrar archivos de reporte en disco (ver reports/generator.py).
+    if (
+        owner in (".", "..") or repo_name in (".", "..")
+        or not _VALID_SEGMENT.match(owner) or not _VALID_SEGMENT.match(repo_name)
+    ):
+        raise ValueError(f"URL de GitHub inválida: {url}")
+    return owner, repo_name

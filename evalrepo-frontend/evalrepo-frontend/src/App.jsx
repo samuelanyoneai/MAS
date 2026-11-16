@@ -46,7 +46,7 @@ const normalizeResult = r => {
   const tr = r.temporal_result   || {}
   const sr = r.structural_result || {}
   const cr = r.content_result    || {}
-  const score = parseFloat(r.global_score) || 0
+  const score = Number.parseFloat(r.global_score) || 0
 
   // Fechas reales de cada semana en vez de "Sem 1" — fallback a weekly_counts
   // por si el backend todavía no manda weekly_breakdown (compatibilidad hacia atrás).
@@ -238,11 +238,12 @@ const WeightsModal = ({ weights, onChange, onClose }) => {
   ]
 
   return (
-    <div style={{
+    <div role="presentation" style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
     }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
+      <div role="dialog" aria-modal="true" aria-label="Ajustar pesos de las dimensiones"
+        onClick={e => e.stopPropagation()} style={{
         background: C.white, borderRadius: 12, padding: 28, width: 380, boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
       }}>
         <h3 style={{ margin: '0 0 6px', fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1028,10 +1029,19 @@ function CargaView({ onStart, errorMsg }) {
       <SectionCard title="Repositorios a evaluar">
         <div
           ref={dropRef}
+          role="button"
+          tabIndex={0}
+          aria-label="Seleccionar archivo CSV o TXT con las URLs de los repositorios"
           onDragOver={e => { e.preventDefault(); setDragging(true) }}
           onDragLeave={() => setDragging(false)}
           onDrop={handleDrop}
-          onClick={() => document.getElementById('csv-input').click()}
+          onClick={() => !csvFile && document.getElementById('csv-input').click()}
+          onKeyDown={e => {
+            if (!csvFile && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              document.getElementById('csv-input').click()
+            }
+          }}
           style={{
             border: `2px dashed ${dragging ? C.blue : C.border}`,
             borderRadius: 10, padding: '32px 24px', textAlign: 'center',
@@ -1040,8 +1050,7 @@ function CargaView({ onStart, errorMsg }) {
           }}>
           <input id="csv-input" type="file" accept=".csv,.txt" style={{ display: 'none' }} onChange={handleFileInput} />
           {csvFile ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', background: C.greenSoft, borderRadius: 8, border: `1px solid ${C.greenBdr}` }}
-              onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', background: C.greenSoft, borderRadius: 8, border: `1px solid ${C.greenBdr}` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: 13, fontWeight: 500 }}>{csvFile.name}</div>
@@ -1739,8 +1748,8 @@ function ReportesView({ results, evalId, setTab, onOverride, onOverrideContent }
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <div>
-          <label style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Filtrar por cumplimiento</label>
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+          <label htmlFor="filter-status" style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Filtrar por cumplimiento</label>
+          <select id="filter-status" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
             style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 13 }}>
             <option value="todos">Todos</option>
             <option value="ok">Aprobados</option>
@@ -1749,8 +1758,8 @@ function ReportesView({ results, evalId, setTab, onOverride, onOverrideContent }
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Filtrar por alertas</label>
-          <select value={filterAlerts} onChange={e => setFilterAlerts(e.target.value)}
+          <label htmlFor="filter-alerts" style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Filtrar por alertas</label>
+          <select id="filter-alerts" value={filterAlerts} onChange={e => setFilterAlerts(e.target.value)}
             style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 13 }}>
             <option value="todos">Todas</option>
             <option value="con">Con alertas</option>
@@ -1758,16 +1767,16 @@ function ReportesView({ results, evalId, setTab, onOverride, onOverrideContent }
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Umbral mínimo</label>
-          <select value={filterUmbral} onChange={e => setFilterUmbral(e.target.value)}
+          <label htmlFor="filter-umbral" style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Umbral mínimo</label>
+          <select id="filter-umbral" value={filterUmbral} onChange={e => setFilterUmbral(e.target.value)}
             style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 13 }}>
             <option value="todos">Todos</option>
             <option value="bajo">Bajo el umbral ({aprobMin} pts)</option>
           </select>
         </div>
         <div>
-          <label style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Ordenar por</label>
-          <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+          <label htmlFor="sort-by" style={{ fontSize: 12, color: C.textSub, marginRight: 6 }}>Ordenar por</label>
+          <select id="sort-by" value={sortBy} onChange={e => setSortBy(e.target.value)}
             style={{ padding: '6px 10px', borderRadius: 7, border: `1px solid ${C.border}`, fontSize: 13 }}>
             <option value="puntaje">Puntaje (mayor a menor)</option>
             <option value="nombre">Nombre (A–Z)</option>
