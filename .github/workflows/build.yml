@@ -48,7 +48,6 @@ jobs:
             -Dsonar.organization=samuelanyoneai
             -Dsonar.projectKey=samuelanyoneai_MAS
             -Dsonar.sources=evalrepo_backend/evalrepo,evalrepo-frontend/evalrepo-frontend/src
-            -Dsonar.tests=evalrepo-frontend/evalrepo-frontend/src
-            -Dsonar.test.inclusions=**/*.test.jsx,**/setupTests.js
+            -Dsonar.exclusions=evalrepo-frontend/evalrepo-frontend/src/**/*.test.jsx,evalrepo-frontend/evalrepo-frontend/src/setupTests.js
             -Dsonar.python.coverage.reportPaths=evalrepo_backend/evalrepo/coverage.xml
             -Dsonar.javascript.lcov.reportPaths=evalrepo-frontend/evalrepo-frontend/coverage/lcov.info
