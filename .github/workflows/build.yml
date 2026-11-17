@@ -47,7 +47,6 @@ jobs:
           args: >
             -Dsonar.organization=samuelanyoneai
             -Dsonar.projectKey=samuelanyoneai_MAS
-            -Dsonar.projectVersion=${{ github.sha }}
             -Dsonar.sources=evalrepo_backend/evalrepo,evalrepo-frontend/evalrepo-frontend/src
             -Dsonar.python.coverage.reportPaths=evalrepo_backend/evalrepo/coverage.xml
             -Dsonar.javascript.lcov.reportPaths=evalrepo-frontend/evalrepo-frontend/coverage/lcov.info
