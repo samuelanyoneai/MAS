@@ -47,48 +47,30 @@ describe('WeightsModal', () => {
 
 // ─── CargaView (dropzone) ───────────────────────────────────────────────────
 
+const DROPZONE_NAME = 'Seleccionar archivo CSV o TXT con las URLs de los repositorios'
+
+function renderDropzone() {
+  render(<CargaView onStart={vi.fn()} errorMsg="" />)
+  return screen.getByRole('button', { name: DROPZONE_NAME })
+}
+
 describe('CargaView dropzone', () => {
   it('expone el dropzone como un control accesible por teclado', () => {
-    render(<CargaView onStart={vi.fn()} errorMsg="" />)
-    const dropzone = screen.getByRole('button', {
-      name: 'Seleccionar archivo CSV o TXT con las URLs de los repositorios',
-    })
-    expect(dropzone).toHaveAttribute('tabIndex', '0')
+    expect(renderDropzone()).toHaveAttribute('tabIndex', '0')
   })
 
-  it('activa el selector de archivo al presionar Enter en el dropzone', () => {
-    render(<CargaView onStart={vi.fn()} errorMsg="" />)
-    const dropzone = screen.getByRole('button', {
-      name: 'Seleccionar archivo CSV o TXT con las URLs de los repositorios',
-    })
-    const input = document.getElementById('csv-input')
-    const clickSpy = vi.spyOn(input, 'click')
+  it.each([['Enter'], [' ']])('activa el selector de archivo al presionar "%s"', (key) => {
+    const dropzone = renderDropzone()
+    const clickSpy = vi.spyOn(document.getElementById('csv-input'), 'click')
 
-    fireEvent.keyDown(dropzone, { key: 'Enter' })
-
-    expect(clickSpy).toHaveBeenCalled()
-  })
-
-  it('activa el selector de archivo al presionar espacio en el dropzone', () => {
-    render(<CargaView onStart={vi.fn()} errorMsg="" />)
-    const dropzone = screen.getByRole('button', {
-      name: 'Seleccionar archivo CSV o TXT con las URLs de los repositorios',
-    })
-    const input = document.getElementById('csv-input')
-    const clickSpy = vi.spyOn(input, 'click')
-
-    fireEvent.keyDown(dropzone, { key: ' ' })
+    fireEvent.keyDown(dropzone, { key })
 
     expect(clickSpy).toHaveBeenCalled()
   })
 
   it('ignora otras teclas', () => {
-    render(<CargaView onStart={vi.fn()} errorMsg="" />)
-    const dropzone = screen.getByRole('button', {
-      name: 'Seleccionar archivo CSV o TXT con las URLs de los repositorios',
-    })
-    const input = document.getElementById('csv-input')
-    const clickSpy = vi.spyOn(input, 'click')
+    const dropzone = renderDropzone()
+    const clickSpy = vi.spyOn(document.getElementById('csv-input'), 'click')
 
     fireEvent.keyDown(dropzone, { key: 'Tab' })
 

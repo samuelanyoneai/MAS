@@ -29,7 +29,7 @@ jobs:
           node-version: "20"
       - name: Install frontend dependencies
         working-directory: evalrepo-frontend/evalrepo-frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Run frontend tests with coverage
         working-directory: evalrepo-frontend/evalrepo-frontend
         run: npm run test:coverage
@@ -48,5 +48,7 @@ jobs:
             -Dsonar.organization=samuelanyoneai
             -Dsonar.projectKey=samuelanyoneai_MAS
             -Dsonar.sources=evalrepo_backend/evalrepo,evalrepo-frontend/evalrepo-frontend/src
+            -Dsonar.tests=evalrepo-frontend/evalrepo-frontend/src
+            -Dsonar.test.inclusions=**/*.test.jsx,**/setupTests.js
             -Dsonar.python.coverage.reportPaths=evalrepo_backend/evalrepo/coverage.xml
             -Dsonar.javascript.lcov.reportPaths=evalrepo-frontend/evalrepo-frontend/coverage/lcov.info
