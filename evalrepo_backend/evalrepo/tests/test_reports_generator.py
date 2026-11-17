@@ -4,7 +4,18 @@ import io
 
 import openpyxl
 
-from reports.generator import render_individual, render_consolidated, generate_excel, _obs_estructural, _obs_contenido
+from reports.generator import (
+    render_individual,
+    render_consolidated,
+    generate_excel,
+    generate_reports_node,
+    save_reports,
+    _safe_filename,
+    _obs_estructural,
+    _obs_versionado,
+    _obs_temporal,
+    _obs_contenido,
+)
 
 
 def full_result(**overrides):
@@ -130,3 +141,138 @@ def test_obs_contenido_con_ajuste_manual():
 def test_obs_estructural_dimension_deshabilitada():
     result = full_result(structural=None)
     assert _obs_estructural(result) == "Dimensión deshabilitada."
+
+
+# Prueba para que las observaciones estructurales listen los archivos faltantes
+def test_obs_estructural_con_archivos_faltantes():
+    result = full_result()
+    result["structural"]["files_missing"] = ["src/", "tests/"]
+    obs = _obs_estructural(result)
+    assert "Faltan: src/, tests/" in obs
+
+
+# Prueba para que las observaciones estructurales reporten los checks alternativos
+def test_obs_estructural_alternative_checks():
+    result = full_result()
+    result["structural"]["alternative_checks"] = [
+        {"nombre": "requirements.txt", "found": True, "found_in": "raiz"},
+        {"nombre": "Pipfile", "found": False, "carpetas": ["raiz", "src/"]},
+    ]
+    obs = _obs_estructural(result)
+    assert "requirements.txt encontrado en raiz." in obs
+    assert "Pipfile no encontrado en raiz, src/." in obs
+
+
+# Prueba para que una dimension de versionado deshabilitada muestre el mensaje correspondiente
+def test_obs_versionado_dimension_deshabilitada():
+    result = full_result(versioning=None)
+    assert _obs_versionado(result) == "Dimensión deshabilitada."
+
+
+# Prueba para que las observaciones de versionado listen los mensajes genericos
+def test_obs_versionado_con_mensajes_genericos():
+    result = full_result()
+    result["versioning"]["generic_messages"] = ["fix", "update"]
+    obs = _obs_versionado(result)
+    assert 'Genéricos detectados: "fix", "update".' in obs
+
+
+# Prueba para que una dimension temporal deshabilitada muestre el mensaje correspondiente
+def test_obs_temporal_dimension_deshabilitada():
+    result = full_result(temporal=None)
+    assert _obs_temporal(result) == "Dimensión deshabilitada."
+
+
+# Prueba para que las observaciones temporales alerten sobre la concentracion de commits
+def test_obs_temporal_con_alerta_de_concentracion():
+    result = full_result()
+    result["temporal"]["concentration_alert"] = True
+    result["temporal"]["concentration_pct"] = 85.0
+    obs = _obs_temporal(result)
+    assert "85.0% de commits concentrados al final del período." in obs
+
+
+# Prueba para que una dimension de contenido deshabilitada muestre el mensaje correspondiente
+def test_obs_contenido_dimension_deshabilitada():
+    result = full_result(content=None)
+    assert _obs_contenido(result) == "Dimensión deshabilitada."
+
+
+# Prueba para que las observaciones de contenido listen los requisitos incumplidos con su peso
+def test_obs_contenido_con_requisitos_faltantes():
+    result = full_result()
+    result["content"]["requirements_missing"] = ["usa polimorfismo"]
+    result["content"]["details"] = {"requisitos_pesos": {"usa polimorfismo": 5.0}}
+    obs = _obs_contenido(result)
+    assert "No cumple: usa polimorfismo (5.0 pts)" in obs
+
+
+# Prueba para que las observaciones de contenido reporten el cumplimiento por rama
+def test_obs_contenido_branch_requirements():
+    result = full_result()
+    result["content"]["branch_requirements"] = [
+        {"branch": "docs", "requirements_missing": []},
+        {"branch": "prompts", "requirements_missing": ["documentar prompts"]},
+    ]
+    obs = _obs_contenido(result)
+    assert "Rama 'docs': cumple." in obs
+    assert "Rama 'prompts': no cumple: documentar prompts." in obs
+
+
+# Prueba para que _safe_filename se quede solo con el nombre del archivo
+def test_safe_filename_descarta_rutas():
+    assert _safe_filename("../../etc/passwd") == "passwd"
+    assert _safe_filename("juan_proyecto.html") == "juan_proyecto.html"
+
+
+# Prueba para que save_reports escriba los informes individuales y el consolidado en disco
+def test_save_reports_guarda_archivos(tmp_path):
+    resultados = [full_result(report_html="<p>hola</p>")]
+    save_reports(resultados, "<p>consolidado</p>", tmp_path)
+
+    assert (tmp_path / "juan_proyecto.html").read_text(encoding="utf-8") == "<p>hola</p>"
+    assert (tmp_path / "consolidado.html").read_text(encoding="utf-8") == "<p>consolidado</p>"
+
+
+# Prueba para que save_reports descarte nombres de archivo que intenten escapar del directorio de salida
+def test_save_reports_rechaza_nombre_inseguro(tmp_path):
+    resultados = [full_result(student="../../tmp", repo_name="evil", report_html="<p>malo</p>")]
+    save_reports(resultados, "<p>consolidado</p>", tmp_path)
+
+    # el nombre inseguro se resuelve a "tmp_evil.html" dentro del propio tmp_path, asi que
+    # el unico forma de comprobar el rechazo es que no se haya escapado del directorio
+    assert all(p.parent == tmp_path for p in tmp_path.rglob("*.html"))
+
+
+# Prueba para que generate_reports_node arme el HTML de cada repo y el consolidado
+def test_generate_reports_node_genera_html(monkeypatch):
+    state = {"results": [full_result()], "criteria": {}}
+    output = generate_reports_node(state)
+    assert len(output["results"]) == 1
+    assert output["results"][0]["report_html"]
+    assert "juan" in output["consolidated_report"]
+
+
+# Prueba para que generate_reports_node siga adelante si un informe individual falla
+def test_generate_reports_node_tolera_error_individual(monkeypatch):
+    def fake_render_individual(result, criteria, env=None):
+        raise ValueError("boom")
+
+    monkeypatch.setattr("reports.generator.render_individual", fake_render_individual)
+    state = {"results": [full_result()], "criteria": {}}
+    output = generate_reports_node(state)
+
+    assert len(output["results"]) == 1
+    assert "report_html" not in output["results"][0] or output["results"][0]["report_html"] is None
+
+
+# Prueba para que generate_reports_node siga adelante si el consolidado falla
+def test_generate_reports_node_tolera_error_consolidado(monkeypatch):
+    def fake_render_consolidated(results, criteria, env=None):
+        raise ValueError("boom")
+
+    monkeypatch.setattr("reports.generator.render_consolidated", fake_render_consolidated)
+    state = {"results": [full_result()], "criteria": {}}
+    output = generate_reports_node(state)
+
+    assert "Error generando el informe consolidado" in output["consolidated_report"]

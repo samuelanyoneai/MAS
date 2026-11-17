@@ -19,6 +19,12 @@ def test_load_criteria_ruta_inexistente():
         load_criteria("config/no_existe.yaml")
 
 
+# Prueba para rechazar una ruta que intente escapar de CRITERIA_DIR
+def test_load_criteria_rechaza_path_traversal():
+    with pytest.raises(ValueError, match="no permitida"):
+        load_criteria("../../etc/passwd")
+
+
 # Prueba para validar un criterio completo y correcto
 def test_validate_criterios_correctos_no_lanza():
     _validate(base_criteria())

@@ -34,6 +34,20 @@ def test_parse_url_invalida():
         extraction._parse_url("no-es-una-url")
 
 
+# Prueba para rechazar un owner/repo que sea literalmente ".." (path traversal)
+def test_parse_url_rechaza_segmentos_de_escape():
+    with pytest.raises(ValueError):
+        extraction._parse_url("https://github.com/owner/..")
+    with pytest.raises(ValueError):
+        extraction._parse_url("https://github.com/../repo")
+
+
+# Prueba para rechazar un owner/repo con caracteres fuera del formato de GitHub
+def test_parse_url_rechaza_caracteres_invalidos():
+    with pytest.raises(ValueError):
+        extraction._parse_url("https://github.com/owner/repo%2f..%2fsecret")
+
+
 def make_state(url="https://github.com/juan/proyecto"):
     return {
         "current_index": 0,
