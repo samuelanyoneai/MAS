@@ -16,7 +16,7 @@ const API_BASE = 'http://localhost:8000'
 // Formato esperado de los ids que genera el backend (uuid4). Se valida antes de
 // usarlos para construir cualquier URL, aunque siempre vengan de la propia API.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const isValidEvalId = (id) => typeof id === 'string' && UUID_RE.test(id)
+export const isValidEvalId = (id) => typeof id === 'string' && UUID_RE.test(id)
 
 // ─── Paleta de colores ────────────────────────────────────────────────────────
 const C = {
@@ -46,7 +46,7 @@ const scoreColor = s => s >= 70 ? C.green : s >= 50 ? C.amber : C.red
 const scoreSoft  = s => s >= 70 ? C.greenSoft : s >= 50 ? C.amberSoft : C.redSoft
 const scoreBdr   = s => s >= 70 ? C.greenBdr : s >= 50 ? C.amberBdr : C.redBdr
 
-const normalizeResult = r => {
+export const normalizeResult = r => {
   const vr = r.versioning_result || {}
   const tr = r.temporal_result   || {}
   const sr = r.structural_result || {}
@@ -230,7 +230,7 @@ const Btn = ({ variant = 'primary', children, ...props }) => {
 }
 
 // ─── Modal de pesos ───────────────────────────────────────────────────────────
-const WeightsModal = ({ weights, onChange, onClose }) => {
+export const WeightsModal = ({ weights, onChange, onClose }) => {
   const [local, setLocal] = useState({ ...weights })
   const total = Object.values(local).reduce((a,b) => a+b, 0)
   const ok = total === 100
@@ -972,7 +972,7 @@ function CriteriosView({
 }
 
 // ─── Vista: Cargar Repositorios ───────────────────────────────────────────────
-function CargaView({ onStart, errorMsg }) {
+export function CargaView({ onStart, errorMsg }) {
   const [urls, setUrls]       = useState('')
   const [token, setToken]     = useState('')
   const [config, setConfig]   = useState('Configuración por defecto UTPL')
@@ -1670,7 +1670,7 @@ function ReporteIndividual({ r, evalId, onBack, onOverride, onOverrideContent })
 }
 
 // ─── Vista: Reportes ──────────────────────────────────────────────────────────
-function ReportesView({ results, evalId, setTab, onOverride, onOverrideContent }) {
+export function ReportesView({ results, evalId, setTab, onOverride, onOverrideContent }) {
   const [selected, setSelected] = useState(null)
   const [filterStatus, setFilterStatus] = useState('todos')
   const [filterAlerts, setFilterAlerts] = useState('todos')
